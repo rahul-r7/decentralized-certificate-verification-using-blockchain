@@ -1,0 +1,35 @@
+{
+  "name": "decentralized-academic-certificate-verification-system",
+  "version": "1.0.0",
+  "description": "Decentralized Academic Certificate Verification System Using Blockchain, Merkle Trees, and IPFS",
+  "main": "server/src/server.js",
+  "scripts": {
+    "install:all": "npm install && npm --prefix server install && npm --prefix client install && npm --prefix blockchain install",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "dev:blockchain": "npm --prefix blockchain run node",
+    "dev": "concurrently \"npm run dev:blockchain\" \"npm run dev:server\" \"npm run dev:client\"",
+    "build": "npm --prefix server run build && npm --prefix client run build && npm --prefix blockchain run compile",
+    "test": "npm --prefix blockchain run test && npm --prefix server run test",
+    "test:blockchain": "npm --prefix blockchain run test",
+    "test:server": "npm --prefix server run test",
+    "deploy:contracts": "npm --prefix blockchain run deploy",
+    "seed": "npm --prefix server run seed"
+  },
+  "keywords": [
+    "blockchain",
+    "ethereum",
+    "solidity",
+    "merkle-tree",
+    "ipfs",
+    "react",
+    "express",
+    "mongodb",
+    "academic-certificates"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
