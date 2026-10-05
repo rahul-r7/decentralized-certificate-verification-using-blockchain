@@ -5,6 +5,7 @@ const VerificationLog = require("../models/VerificationLog");
 const {
   createCanonicalString,
   createLeafHash,
+  sha256,
   verifyMerkleProof,
 } = require("../services/merkle.service");
 const {
@@ -85,7 +86,7 @@ exports.verifyByRegistrationNumber = async (req, res) => {
 
     // 3. Cryptographic Verification Step A: Compute canonical leaf hash from certificate metadata
     const canonicalStr = cert.canonicalData || createCanonicalString(cert);
-    const expectedLeafHash = createLeafHash(cert);
+    const expectedLeafHash = sha256(canonicalStr);
 
     if (expectedLeafHash.toLowerCase() !== cert.leafHash.replace(/^0x/, "").toLowerCase()) {
       await VerificationLog.create({

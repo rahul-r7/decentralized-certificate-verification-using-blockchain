@@ -23,7 +23,10 @@ const PORT = process.env.PORT || 5000;
 // Security & Middleware
 app.use(
   helmet({
-    contentSecurityPolicy: false, // Allowed for embedded PDFs/images in dev
+    contentSecurityPolicy: false,
+    frameguard: false, // Allows iframe embedding for certificate viewer modal
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginEmbedderPolicy: false,
   })
 );
 
@@ -79,14 +82,44 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Sync on-chain batches on startup (ensures confirmed batches exist on local Hardhat after restarts)
+async function syncOnChainBatches() {
+  try {
+    const CertificateBatch = require("./models/CertificateBatch");
+    const { getBatchFromBlockchain, commitBatchToBlockchain } = require("./services/blockchain.service");
+
+    const confirmedBatches = await CertificateBatch.find({ status: "BLOCKCHAIN_CONFIRMED" }).populate("institutionId");
+    for (const batch of confirmedBatches) {
+      if (!batch.merkleRoot) continue;
+      try {
+        const onChain = await getBatchFromBlockchain(batch.merkleRoot);
+        if (!onChain.exists) {
+          console.log(`[Blockchain Sync] Merkle Root ${batch.merkleRoot} for batch ${batch.batchId} missing on-chain. Auto-registering...`);
+          const instCode = batch.institutionId?.code || "NIT-001";
+          const res = await commitBatchToBlockchain(batch.batchId, instCode, batch.merkleRoot);
+          if (res.txHash) {
+            batch.blockchainTxHash = res.txHash;
+            await batch.save();
+          }
+        }
+      } catch (err) {
+        console.warn(`[Blockchain Sync] Could not sync batch ${batch.batchId}:`, err.message);
+      }
+    }
+  } catch (err) {
+    console.warn("[Blockchain Sync] Startup sync skipped:", err.message);
+  }
+}
+
 // Start Express Server & Connect MongoDB
 if (process.env.NODE_ENV !== "test") {
-  connectDB().then(() => {
-    app.listen(PORT, () => {
+  connectDB().then(async () => {
+    app.listen(PORT, async () => {
       console.log(`=======================================================`);
       console.log(`Certificate Verification Backend Server running on port ${PORT}`);
       console.log(`API URL: http://localhost:${PORT}/api`);
       console.log(`=======================================================`);
+      await syncOnChainBatches();
     });
   });
 } else {

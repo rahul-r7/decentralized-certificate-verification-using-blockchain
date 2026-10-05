@@ -36,15 +36,21 @@ function getContractInstance(signerOrProvider) {
 
   const contractAddress =
     process.env.CONTRACT_ADDRESS ||
-    (contractConfig ? contractConfig.address : "0x5FbDB2315678afecb367f032d93F642f64180aa3");
+    (contractConfig
+      ? contractConfig.address
+      : "0x5FbDB2315678afecb367f032d93F642f64180aa3");
 
   if (!contractConfig || !contractConfig.abi) {
     throw new Error(
-      "Contract ABI not found. Please compile and deploy the smart contract first via `npm run deploy:contracts`"
+      "Contract ABI not found. Please compile and deploy the smart contract first via `npm run deploy:contracts`",
     );
   }
 
-  return new ethers.Contract(contractAddress, contractConfig.abi, signerOrProvider);
+  return new ethers.Contract(
+    contractAddress,
+    contractConfig.abi,
+    signerOrProvider,
+  );
 }
 
 /**
@@ -61,10 +67,16 @@ async function commitBatchToBlockchain(batchId, institutionId, merkleRoot) {
     }
 
     console.log(`Submitting registerBatch tx for batch ${batchId}...`);
-    const tx = await contract.registerBatch(batchId, institutionId, formattedRoot);
+    const tx = await contract.registerBatch(
+      batchId,
+      institutionId,
+      formattedRoot,
+    );
     const receipt = await tx.wait();
 
-    console.log(`Batch ${batchId} committed to blockchain. TxHash: ${receipt.hash}`);
+    console.log(
+      `Batch ${batchId} committed to blockchain. TxHash: ${receipt.hash}`,
+    );
 
     return {
       success: true,
@@ -120,10 +132,18 @@ async function verifyLeafOnBlockchain(leafHash, proof, merkleRoot) {
     const contract = getContractInstance(provider);
 
     let formattedLeaf = leafHash.startsWith("0x") ? leafHash : "0x" + leafHash;
-    let formattedRoot = merkleRoot.startsWith("0x") ? merkleRoot : "0x" + merkleRoot;
-    const formattedProof = proof.map((p) => (p.startsWith("0x") ? p : "0x" + p));
+    let formattedRoot = merkleRoot.startsWith("0x")
+      ? merkleRoot
+      : "0x" + merkleRoot;
+    const formattedProof = proof.map((p) =>
+      p.startsWith("0x") ? p : "0x" + p,
+    );
 
-    const isValid = await contract.verifyLeaf(formattedLeaf, formattedProof, formattedRoot);
+    const isValid = await contract.verifyLeaf(
+      formattedLeaf,
+      formattedProof,
+      formattedRoot,
+    );
     return isValid;
   } catch (err) {
     console.error("Blockchain leaf verification error:", err.message);

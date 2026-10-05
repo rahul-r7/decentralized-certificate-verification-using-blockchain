@@ -14,6 +14,17 @@ const downloadLimiter = rateLimit({
   },
 });
 
+const { authenticateToken } = require("../middleware/auth.middleware");
+const { authorizeRoles } = require("../middleware/rbac.middleware");
+
+// Authenticated certificate preview for verification authorities (CoE, Registrar, Staff, Admins)
+router.get(
+  "/preview/:registrationNumber",
+  authenticateToken,
+  authorizeRoles("CONTROLLER_OF_EXAMINATIONS", "REGISTRAR", "EXAMINATION_STAFF", "INSTITUTION_ADMIN", "SUPER_ADMIN"),
+  certificateController.previewCertificatePdf
+);
+
 // NO LOGIN REQUIRED for student certificate download routes!
 router.get("/download-info/:registrationNumber", downloadLimiter, certificateController.getCertificateDownloadInfo);
 router.post("/download-info", downloadLimiter, certificateController.getCertificateDownloadInfo);
@@ -21,3 +32,4 @@ router.get("/view/:registrationNumber", downloadLimiter, certificateController.v
 router.get("/download/:registrationNumber", downloadLimiter, certificateController.downloadCertificatePdf);
 
 module.exports = router;
+

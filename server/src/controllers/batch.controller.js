@@ -239,7 +239,14 @@ exports.getBatchByBatchId = async (req, res) => {
       return res.status(404).json({ success: false, message: "Batch not found." });
     }
 
-    const certificates = await Certificate.find({ batchId: batch.batchId });
+    if (req.user.role !== "SUPER_ADMIN" && req.user.institutionId && batch.institutionId) {
+      const batchInstId = batch.institutionId._id ? batch.institutionId._id.toString() : batch.institutionId.toString();
+      if (batchInstId !== req.user.institutionId.toString()) {
+        return res.status(403).json({ success: false, message: "Unauthorized access to batch from another institution." });
+      }
+    }
+
+    const certificates = await Certificate.find({ batchId: batch.batchId }).sort({ registrationNumber: 1 });
     const Approval = require("../models/Approval");
     const approvals = await Approval.find({ batchId: batch.batchId }).populate("approverId", "name email role walletAddress");
 

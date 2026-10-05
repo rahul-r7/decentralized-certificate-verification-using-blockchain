@@ -10,6 +10,8 @@ async function authenticateToken(req, res, next) {
 
     if (authHeader && authHeader.startsWith("Bearer ")) {
       token = authHeader.split(" ")[1];
+    } else if (req.query && req.query.token) {
+      token = req.query.token;
     } else if (req.cookies && req.cookies.token) {
       token = req.cookies.token;
     }

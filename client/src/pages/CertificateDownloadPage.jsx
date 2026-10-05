@@ -245,39 +245,55 @@ export default function CertificateDownloadPage() {
 
       {/* PDF View Modal */}
       {showPdfModal && downloadInfo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full h-[85vh] flex flex-col overflow-hidden border border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full h-[88vh] flex flex-col overflow-hidden border border-slate-200">
             {/* Modal Header */}
             <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-emerald-400" />
                 <h3 className="font-semibold text-base">Certificate PDF Viewer - {downloadInfo.registrationNumber}</h3>
               </div>
-              <button onClick={() => setShowPdfModal(false)} className="text-slate-400 hover:text-white transition">
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-3">
+                <a
+                  href={`${API_BASE_URL}/certificates/view/${encodeURIComponent(downloadInfo.registrationNumber)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Open in Full Tab</span>
+                </a>
+                <button onClick={() => setShowPdfModal(false)} className="text-slate-400 hover:text-white transition p-1">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Embedded PDF iframe */}
-            <div className="flex-1 bg-slate-100 p-2">
+            <div className="flex-1 bg-slate-100 p-2 relative">
               <iframe
                 src={`${API_BASE_URL}/certificates/view/${encodeURIComponent(downloadInfo.registrationNumber)}`}
-                className="w-full h-full rounded-xl border border-slate-300 shadow-inner"
+                className="w-full h-full rounded-xl border border-slate-300 shadow-inner bg-white"
                 title="Certificate PDF Viewer"
               />
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs">
-              <span className="text-slate-500 font-mono">IPFS Streamed Document</span>
-              <a
-                href={`${API_BASE_URL}/certificates/download/${encodeURIComponent(downloadInfo.registrationNumber)}`}
-                download
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition flex items-center gap-1.5"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Download Attachment</span>
-              </a>
+            <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 flex flex-wrap justify-between items-center gap-2 text-xs">
+              <div className="flex items-center gap-2 text-slate-600 font-mono">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span>Student: {downloadInfo.studentName} | IPFS Stream</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`${API_BASE_URL}/certificates/download/${encodeURIComponent(downloadInfo.registrationNumber)}`}
+                  download
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition flex items-center gap-1.5 shadow-sm"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download PDF</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>

@@ -19,5 +19,6 @@ const upload = multer({
 router.get("/registration/:registrationNumber", verificationController.verifyByRegistrationNumber);
 router.get("/qr/:registrationNumber", verificationController.verifyByRegistrationNumber);
 router.post("/pdf", upload.single("certificatePdf"), verificationController.verifyPdfUpload);
+router.get("/:registrationNumber", verificationController.verifyByRegistrationNumber);
 
 module.exports = router;

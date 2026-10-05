@@ -9,17 +9,24 @@ const crypto = require("crypto");
  * Format: registrationNumber|studentName|programme|semester|grade|institutionId|certificateType|issueDate
  */
 function createCanonicalString(certData) {
-  const regNo = String(certData.registrationNumber || "").trim().toUpperCase();
+  const regNo = String(certData.registrationNumber || "")
+    .trim()
+    .toUpperCase();
   const name = String(certData.studentName || "").trim();
   const programme = String(certData.programme || "").trim();
   const semester = String(certData.semester || "").trim();
   const grade = String(
-    (certData.academicData && certData.academicData.grade) || certData.grade || ""
+    (certData.academicData && certData.academicData.grade) ||
+      certData.grade ||
+      "",
   ).trim();
 
   let instId = "";
   if (certData.institutionId) {
-    if (typeof certData.institutionId === "object" && certData.institutionId._id) {
+    if (
+      typeof certData.institutionId === "object" &&
+      certData.institutionId._id
+    ) {
       instId = String(certData.institutionId._id).trim();
     } else {
       instId = String(certData.institutionId).trim();
@@ -27,10 +34,14 @@ function createCanonicalString(certData) {
   }
 
   const certType = String(
-    (certData.academicData && certData.academicData.certificateType) || certData.certificateType || "Degree"
+    (certData.academicData && certData.academicData.certificateType) ||
+      certData.certificateType ||
+      "Degree",
   ).trim();
   const issueDate = String(
-    (certData.academicData && certData.academicData.issueDate) || certData.issueDate || ""
+    (certData.academicData && certData.academicData.issueDate) ||
+      certData.issueDate ||
+      "",
   ).trim();
 
   return `${regNo}|${name}|${programme}|${semester}|${grade}|${instId}|${certType}|${issueDate}`;

@@ -1,3 +1,5 @@
+const fs = require("fs");
+const path = require("path");
 const Certificate = require("../models/Certificate");
 const CertificateBatch = require("../models/CertificateBatch");
 const AuditLog = require("../models/AuditLog");
@@ -176,3 +178,73 @@ exports.downloadCertificatePdf = async (req, res) => {
     return res.status(500).send(`Error downloading certificate file: ${err.message}`);
   }
 };
+
+/**
+ * Authorized Certificate PDF Preview API (For CoE, Registrar, Staff to verify student details).
+ */
+exports.previewCertificatePdf = async (req, res) => {
+  const rawRegNo = req.params.registrationNumber || "";
+  const regNo = String(rawRegNo).trim().toUpperCase();
+
+  try {
+    if (!regNo) {
+      return res.status(400).send("Registration number is required.");
+    }
+
+    const cert = await Certificate.findOne({ registrationNumber: regNo }).populate("institutionId");
+    if (!cert) {
+      return res.status(404).send("Certificate not found.");
+    }
+
+    // Role check: super admin can see all; others must match institution
+    if (req.user.role !== "SUPER_ADMIN" && req.user.institutionId) {
+      const certInstId = cert.institutionId?._id?.toString() || cert.institutionId?.toString();
+      if (certInstId && certInstId !== req.user.institutionId.toString()) {
+        return res.status(403).send("Unauthorized to view certificate from another institution.");
+      }
+    }
+
+    // 1. If local PDF file exists on disk, stream it
+    if (cert.certificatePdfPath && fs.existsSync(cert.certificatePdfPath)) {
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="Certificate-${regNo}.pdf"`);
+      return fs.createReadStream(cert.certificatePdfPath).pipe(res);
+    }
+
+    // 2. If IPFS CID exists, fetch from IPFS
+    if (cert.ipfsCid) {
+      try {
+        const pdfBuffer = await getCertificate(cert.ipfsCid);
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `inline; filename="Certificate-${regNo}.pdf"`);
+        return res.send(pdfBuffer);
+      } catch (ipfsErr) {
+        console.warn("IPFS fetch warning in preview, falling back to dynamic generation:", ipfsErr.message);
+      }
+    }
+
+    // 3. Fallback: generate PDF on the fly
+    const { generateCertificatePdf } = require("../services/pdf.service");
+    const instName = cert.institutionId?.name || "ACADEMIC INSTITUTION";
+    const { pdfBuffer } = await generateCertificatePdf(
+      {
+        registrationNumber: cert.registrationNumber,
+        studentName: cert.studentName,
+        programme: cert.programme,
+        semester: cert.semester,
+        grade: cert.academicData?.grade || "A",
+        issueDate: cert.academicData?.issueDate || new Date().toISOString().split("T")[0],
+        certificateType: cert.academicData?.certificateType || "Degree",
+      },
+      instName
+    );
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="Certificate-${regNo}.pdf"`);
+    return res.send(pdfBuffer);
+  } catch (err) {
+    console.error("Preview Certificate PDF Error:", err);
+    return res.status(500).send(`Error previewing certificate: ${err.message}`);
+  }
+};
+

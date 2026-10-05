@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { ShieldCheck, X, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, X, AlertTriangle, CheckCircle2, Eye } from "lucide-react";
 import WalletConnect from "./WalletConnect";
 import { signBatchApproval } from "../services/web3";
 import api from "../services/api";
 
-export default function ApprovalModal({ batch, userRole, isOpen, onClose, onSuccess }) {
+export default function ApprovalModal({ batch, userRole, isOpen, onClose, onSuccess, onViewStudents }) {
   const [connectedWallet, setConnectedWallet] = useState("");
   const [signing, setSigning] = useState(false);
   const [error, setError] = useState("");
@@ -83,9 +83,24 @@ export default function ApprovalModal({ batch, userRole, isOpen, onClose, onSucc
                   <span className="text-slate-500 font-medium">Batch ID:</span>
                   <span className="font-mono font-semibold text-slate-900">{batch.batchId}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-slate-500 font-medium">Certificates:</span>
-                  <span className="font-semibold">{batch.totalCertificates} Students</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-slate-800">{batch.totalCertificates} Students</span>
+                    {onViewStudents && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onViewStudents(batch);
+                        }}
+                        className="text-xs text-brand-600 hover:text-brand-800 font-bold underline flex items-center gap-1 transition"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        Verify Students
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-medium">Approval Role:</span>
